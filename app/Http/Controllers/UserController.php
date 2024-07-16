@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+
     public function index()
     {
         return User::all();
@@ -15,6 +16,7 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // only guest
         $fields = $request->validate([
             'name' => ['required'],
             'email' => ['required'],
@@ -31,6 +33,7 @@ class UserController extends Controller
 
     public function update(Request $request, string $id)
     {
+        // only owner
         $user = User::findOrFail($id);
         $fields = $request->validate([
             'name' => ['required'],
@@ -44,6 +47,7 @@ class UserController extends Controller
 
     public function destroy(string $id)
     {
+        // only owner
         return User::destroy($id);
     }
 }
