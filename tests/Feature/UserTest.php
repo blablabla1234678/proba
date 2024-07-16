@@ -67,23 +67,39 @@ class UserTest extends TestCase
     }
 
     public function test_updating_user():void{
-        $user = User::create($this->user1);
-        $response = $this->putJson('/api/users/'.$user->id, $this->user1b);
+        $user1 = $this->getUser1IdAndToken();
+        $response = $this->withToken($user1['token'])
+            ->putJson('/api/users/'.$user1['id'], $this->user1b);
+        $response->assertStatus(200);
         $response->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at']);
         $response->assertJson([
-            'id' => $user->id,
+            'id' => $user1['id'],
             'name' => $this->user1b['name'],
             'email' => $this->user1b['email'],
         ]);
-        $userInDb = User::find($user->id);
+        $userInDb = User::find($user1['id']);
         $this->assertEquals($userInDb->name, $this->user1b['name']);
         $this->assertEquals($userInDb->email, $this->user1b['email']);
     }
 
     public function test_deleting_user():void{
-        $user = User::create($this->user1);
-        $this->deleteJson('/api/users/'.$user->id);
-        $userInDb = User::find($user->id);
+        $user1 = $this->getUser1IdAndToken();
+        $response = $this->withToken($user1['token'])
+            ->deleteJson('/api/users/'.$user1['id']);
+        $response->assertStatus(200);
+        $userInDb = User::find($user1['id']);
         $this->assertEquals(!!$userInDb, false);
+    }
+
+    protected function getUser1IdAndToken(){
+        $user = User::create($this->user1);
+        $response = $this->postJson('/api/tokens', $this->user1);
+        $response->assertStatus(201);
+        $response->assertJsonStructure(['plainText']);
+        $json = $response->json();
+        return [
+            'id' => $user->id,
+            'token' => $json['plainText']
+        ];
     }
 }

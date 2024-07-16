@@ -16,7 +16,6 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        // only guest
         $fields = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -33,7 +32,8 @@ class UserController extends Controller
 
     public function update(Request $request, string $id)
     {
-        // only owner
+        if ($request->user()->id != $id)
+            return response('forbidden', 403);
         $user = User::findOrFail($id);
         $fields = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -45,9 +45,10 @@ class UserController extends Controller
         return $user;
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        // only owner
+        if ($request->user()->id != $id)
+            return response('forbidden', 403);
         return User::destroy($id);
     }
 }

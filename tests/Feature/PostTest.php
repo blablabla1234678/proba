@@ -79,6 +79,7 @@ class PostTest extends TestCase
         $post = Post::create(array_merge($this->post1, ['user_id' => $user1['id']]));
         $response = $this->withToken($user1['token'])
             ->putJson('/api/posts/'.$post->id, $this->post1b);
+        $response->assertStatus(200);
         $response->assertJsonStructure(['id', 'user_id', 'title', 'body', 'updated_at', 'created_at']);
         $response->assertJson([
             'id' => $post->id,
@@ -95,6 +96,7 @@ class PostTest extends TestCase
         $post = Post::create(array_merge($this->post1, ['user_id' => $user1['id']]));
         $response = $this->withToken($user1['token'])
             ->deleteJson('/api/posts/'.$post->id);
+        $response->assertStatus(200);
         $postInDb = Post::find($post->id);
         $this->assertEquals(!!$postInDb, false);
     }
