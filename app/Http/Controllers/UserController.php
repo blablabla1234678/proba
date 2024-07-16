@@ -32,7 +32,7 @@ class UserController extends Controller
 
     public function update(Request $request, string $id)
     {
-        if ($request->user()->id != $id)
+        if ($request->user('sanctum')->id != $id)
             return response('forbidden', 403);
         $user = User::findOrFail($id);
         $fields = $request->validate([
@@ -47,7 +47,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, string $id)
     {
-        if ($request->user()->id != $id)
+        if ($request->user('sanctum')->id != $id)
             return response('forbidden', 403);
         return User::destroy($id);
     }

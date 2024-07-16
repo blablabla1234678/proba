@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Hash;
 class TokenController extends Controller
 {
     public function store(Request $request){
-        // only guest
         $fields = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'max:255']
@@ -25,9 +24,7 @@ class TokenController extends Controller
     }
 
     public function destroy(Request $request){
-        // only logged in
-        $user = $request->user();
-        $user->tokens()->delete();
+        $request->user('sanctum')->currentAccessToken()->delete();
         return response(null, 204);
     }
 }

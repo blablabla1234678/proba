@@ -13,10 +13,8 @@ class PostController extends Controller
         return Post::all();
     }
 
-
     public function store(Request $request)
     {
-        // only logged in
         $fields = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:2000']
@@ -32,8 +30,9 @@ class PostController extends Controller
 
     public function update(Request $request, string $id)
     {
-        // only owner
         $post = Post::findOrFail($id);
+        if ($request->user('sanctum')->id !== $post->user->id)
+            return response('forbidden', 403);
         $fields = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:2000']
@@ -42,13 +41,15 @@ class PostController extends Controller
         return $post;
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        // only owner
+        $post = Post::findOrFail($id);
+        if ($request->user('sanctum')->id !== $post->user->id)
+            return response('forbidden', 403);
         return Post::destroy($id);
     }
 
-    public function getUserPosts(string $userId){
+    public function getUserPosts(Request $request, string $userId){
         $user = User::findOrFail($userId);
         return $user->posts();
     }
