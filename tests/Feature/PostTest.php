@@ -32,6 +32,10 @@ class PostTest extends TestCase
         'title' => 'The Post2',
         'body' => 'This the the post body2. It should contain a long text.'
     ];
+    protected $post2 = [
+        'title' => 'The Other Post',
+        'body' => 'This the the other post body. It should contain a long text.'
+    ];
 
     public function test_listing_posts_is_empty_when_no_posts_added():void{
         $response = $this->getJson('/api/posts');
@@ -45,6 +49,20 @@ class PostTest extends TestCase
         Post::create(array_merge($this->post1, ['user_id' => $user->id]));
         Post::create(array_merge($this->post1b, ['user_id' => $user->id]));
         $response = $this->getJson('/api/posts');
+        $response->assertStatus(200);
+        $response->assertJsonIsArray();
+        $response->assertJsonStructure([['id', 'user_id', 'title', 'body', 'updated_at', 'created_at']]);
+        $json = $response->json();
+        $this->assertEquals(count($json), 2);
+    }
+
+    public function test_listing_user_posts():void{
+        $user = User::create($this->user1);
+        Post::create(array_merge($this->post1, ['user_id' => $user->id]));
+        Post::create(array_merge($this->post1b, ['user_id' => $user->id]));
+        $user2 = User::create($this->user2);
+        Post::create(array_merge($this->post2, ['user_id' => $user2->id]));
+        $response = $this->getJson('/api/users/'.$user->id.'/posts');
         $response->assertStatus(200);
         $response->assertJsonIsArray();
         $response->assertJsonStructure([['id', 'user_id', 'title', 'body', 'updated_at', 'created_at']]);

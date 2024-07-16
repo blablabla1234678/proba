@@ -51,7 +51,7 @@ class PostController extends Controller
 
     public function getUserPosts(Request $request, string $userId){
         $user = User::findOrFail($userId);
-        return $user->posts();
+        return $user->posts;
     }
 
 }
