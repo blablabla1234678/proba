@@ -18,8 +18,8 @@ class PostController extends Controller
     {
         // only logged in
         $fields = $request->validate([
-            'title' => ['required'],
-            'body' => ['required']
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:2000']
         ]);
         $fields['user_id'] = $request->user()->id;
         return Post::create($fields);
@@ -35,8 +35,8 @@ class PostController extends Controller
         // only owner
         $post = Post::findOrFail($id);
         $fields = $request->validate([
-            'title' => ['required'],
-            'body' => ['required']
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:2000']
         ]);
         $post->update($fields);
         return $post;

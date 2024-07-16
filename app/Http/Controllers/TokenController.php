@@ -11,8 +11,8 @@ class TokenController extends Controller
     public function store(Request $request){
         // only guest
         $fields = $request->validate([
-            'email' => ['required'],
-            'password' => ['required']
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255']
         ]);
         $user = User::where('email', $fields['email'])->first();
         if (!$user || !Hash::check($fields['password'], $user->password))

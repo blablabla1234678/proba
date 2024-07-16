@@ -18,9 +18,9 @@ class UserController extends Controller
     {
         // only guest
         $fields = $request->validate([
-            'name' => ['required'],
-            'email' => ['required'],
-            'password' => ['required']
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255']
         ]);
         $fields['password'] = Hash::make($fields['password']);
         return User::create($fields);
@@ -36,9 +36,9 @@ class UserController extends Controller
         // only owner
         $user = User::findOrFail($id);
         $fields = $request->validate([
-            'name' => ['required'],
-            'email' => ['required'],
-            'password' => ['required']
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:255']
         ]);
         $fields['password'] = Hash::make($fields['password']);
         $user->update($fields);
