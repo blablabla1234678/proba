@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 //use Illuminate\Foundation\Testing\RefreshDatabase;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -12,33 +11,26 @@ class TokenTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $user1 = [
-        'name' => 'The Tester',
-        'email' => 'test@example.com',
-        'password' => 'abcd12345'
-    ];
-
-    public function test_creating_token():void{
-        $user = User::create($this->user1);
-        $response = $this->postJson('/api/tokens', $this->user1);
-        $response->assertStatus(201);
-        $response->assertJsonStructure(['plainText']);
+    public function test_creating_token():void {
+        $container = new Container();
+        $data = new Data();
+        $container->createUser($data->user1);
+        $this->assertEquals($container->countTokens(), 0);
+        $this->postJson('/api/tokens', $data->user1)
+            ->assertStatus(201)
+            ->assertJsonStructure(['plainText']);
+        $this->assertEquals($container->countTokens(), 1);
     }
 
-    public function test_deleting_token():void{
-        $user = User::create($this->user1);
-        $response = $this->postJson('/api/tokens', $this->user1);
-        $response->assertStatus(201);
-        $response->assertJsonStructure(['plainText']);
-        $token = $response->json();
-        $response = $this->withToken($token['plainText'])
-            ->deleteJson('/api/tokens/current');
-        $response->assertStatus(204);
-        //$response = $this->withToken($token['plainText'])
-        //    ->deleteJson('/api/tokens/current');
-        //$response->assertStatus(401);
-
-        //TODO
-        //Sanctum does not want to logout for some reason
+    public function test_deleting_token():void {
+        $container = new Container();
+        $data = new Data();
+        $container->createUser($data->user1);
+        $token = $container->createToken();
+        $this->assertEquals($container->countTokens(), 1);
+        $this->withToken($token)
+            ->deleteJson('/api/tokens/current')
+            ->assertStatus(204);
+        $this->assertEquals($container->countTokens(), 0);
     }
 }

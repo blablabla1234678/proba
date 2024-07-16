@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 //use Illuminate\Foundation\Testing\RefreshDatabase;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -12,94 +11,68 @@ class UserTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected $user1 = [
-        'name' => 'The Tester',
-        'email' => 'test@example.com',
-        'password' => 'abcd12345'
-    ];
-    protected $user1b = [
-        'name' => 'The Tester2',
-        'email' => 'test2@example.com',
-        'password' => 'abcd1234567'
-    ];
-
     public function test_listing_users_is_empty_when_no_users_added():void{
-        $response = $this->getJson('/api/users');
-        $response->assertStatus(200);
-        $json = $response->json();
-        $this->assertEquals($json, []);
+        $response = $this->getJson('/api/users')
+            ->assertStatus(200)
+            ->assertJsonIsArray();
+        $this->assertEquals($response->json(), []);
     }
 
-    public function test_listing_users():void{
-        User::create($this->user1);
-        User::create($this->user1b);
-        $response = $this->getJson('/api/users');
-        $response->assertStatus(200);
-        $response->assertJsonIsArray();
-        $response->assertJsonStructure([['id', 'name', 'email', 'updated_at', 'created_at']]);
-        $json = $response->json();
-        $this->assertEquals(count($json), 2);
+    public function test_listing_users():void {
+        $container = new Container();
+        $data = new Data();
+        $container->createUser($data->user1);
+        $container->createUser($data->user1b);
+        $response = $this->getJson('/api/users')
+            ->assertStatus(200)
+            ->assertJsonIsArray()
+            ->assertJsonStructure([['id', 'name', 'email', 'updated_at', 'created_at']]);
+        $this->assertEquals(count($response->json()), 2);
     }
 
-    public function test_adding_user():void{
-        $response = $this->postJson('/api/users', $this->user1);
-        $response->assertStatus(201);
-        $response->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at']);
-        $json = $response->json();
-        $response->assertJson([
-            'name' => $this->user1['name'],
-            'email' => $this->user1['email']
-        ]);
-        $userInDb = User::find($json['id']);
-        $this->assertEquals(!!$userInDb, true);
-        $this->assertEquals($userInDb->name, $json['name']);
-        $this->assertEquals($userInDb->email, $json['email']);
+    public function test_adding_user():void {
+        $container = new Container();
+        $data = new Data();
+        $response = $this->postJson('/api/users', $data->user1)
+            ->assertStatus(201)
+            ->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at'])
+            ->assertJson($data->user1_public);
+        $id = $response->json()['id'];
+        $this->assertEquals($container->getUserData($id), $data->user1_public);
     }
 
-    public function test_showing_user():void{
-        $user = User::create($this->user1);
-        $response = $this->getJson('/api/users/'.$user->id);
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at']);
-        $json = $response->json();
-        $this->assertEquals($user->name, $json['name']);
-        $this->assertEquals($user->email, $json['email']);
+    public function test_showing_user():void {
+        $container = new Container();
+        $data = new Data();
+        $user = $container->createUser($data->user1);
+        $this->getJson('/api/users/'.$user->id)
+            ->assertStatus(200)
+            ->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at'])
+            ->assertJson($data->user1_public);
     }
 
-    public function test_updating_user():void{
-        $user1 = $this->getUser1IdAndToken();
-        $response = $this->withToken($user1['token'])
-            ->putJson('/api/users/'.$user1['id'], $this->user1b);
-        $response->assertStatus(200);
-        $response->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at']);
-        $response->assertJson([
-            'id' => $user1['id'],
-            'name' => $this->user1b['name'],
-            'email' => $this->user1b['email'],
-        ]);
-        $userInDb = User::find($user1['id']);
-        $this->assertEquals($userInDb->name, $this->user1b['name']);
-        $this->assertEquals($userInDb->email, $this->user1b['email']);
+    public function test_updating_user():void {
+        $container = new Container();
+        $data = new Data();
+        $user = $container->createUser($data->user1);
+        $this->withToken($container->createToken())
+            ->putJson('/api/users/'.$user->id, $data->user1b)
+            ->assertStatus(200)
+            ->assertJsonStructure(['id', 'name', 'email', 'updated_at', 'created_at'])
+            ->assertJson(['id' => $user->id])
+            ->assertJson($data->user1b_public);
+        $this->assertEquals($container->getUserData($user->id), $data->user1b_public);
     }
 
-    public function test_deleting_user():void{
-        $user1 = $this->getUser1IdAndToken();
-        $response = $this->withToken($user1['token'])
-            ->deleteJson('/api/users/'.$user1['id']);
-        $response->assertStatus(200);
-        $userInDb = User::find($user1['id']);
-        $this->assertEquals(!!$userInDb, false);
+    public function test_deleting_user():void {
+        $container = new Container();
+        $data = new Data();
+        $user = $container->createUser($data->user1);
+        $this->assertEquals($container->countUsers(), 1);
+        $this->withToken($container->createToken())
+            ->deleteJson('/api/users/'.$user->id)
+            ->assertStatus(200);
+        $this->assertEquals($container->countUsers(), 0);
     }
 
-    protected function getUser1IdAndToken(){
-        $user = User::create($this->user1);
-        $response = $this->postJson('/api/tokens', $this->user1);
-        $response->assertStatus(201);
-        $response->assertJsonStructure(['plainText']);
-        $json = $response->json();
-        return [
-            'id' => $user->id,
-            'token' => $json['plainText']
-        ];
-    }
 }
